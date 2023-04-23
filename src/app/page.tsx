@@ -1,95 +1,124 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+import Image from "next/image";
+import { redirect } from "next/navigation";
+import { GenerateMetadata } from "types/next";
 
-export default function Home() {
+import { Article } from "components/Articles";
+import { NotionAPI } from "notion-client";
+import {
+  CollectionPropertySchemaMap,
+  CollectionViewBlock,
+  ExtendedRecordMap,
+  ImageBlock,
+} from "notion-types";
+import { parsePageId } from "notion-utils";
+import { downloadImage } from "utils/image";
+import {
+  getDirectChild,
+  getGrayMatter,
+  getImageDownloadURL,
+} from "utils/notion";
+
+type PageData = {
+  id: string;
+  data: ExtendedRecordMap;
+};
+
+const notion = new NotionAPI({
+  activeUser: process.env.NOTION_ACTIVE_USER,
+  authToken: process.env.NOTION_AUTH_TOKEN,
+});
+
+const pageId = parsePageId(process.env.NOTION_PAGE_URL);
+
+export const generateMetadata: GenerateMetadata = async () => {
+  const pageId = parsePageId(process.env.NOTION_PAGE_URL);
+  const recordMap = await notion.getPage(pageId);
+  const metadata = getGrayMatter(recordMap);
+
+  if (!metadata) {
+    return {
+      title: "Blog",
+    };
+  }
+
+  return {
+    title: metadata.title,
+  };
+};
+
+export default async function Page() {
+  const recordMap = await notion.getPage(pageId);
+  const metadata = getGrayMatter(recordMap);
+
+  if (!metadata) {
+    redirect("/500");
+  }
+
+  const imageList = getDirectChild(recordMap, "image") as ImageBlock[];
+  const profileImage: string =
+    imageList.length !== 0
+      ? await downloadImage(getImageDownloadURL(imageList[0], 128))
+      : "/profile.jpg";
+
+  const databaseView = getDirectChild(
+    recordMap,
+    "collection_view"
+  ) as CollectionViewBlock[];
+
+  if (
+    databaseView.length === 0 ||
+    databaseView[0].collection_id === undefined
+  ) {
+    redirect("/500");
+  }
+  const databaseId = databaseView[0].collection_id;
+  const databaseMap = await notion.getCollectionData(
+    databaseId,
+    databaseView[0].view_ids[0],
+    databaseView[0],
+    { loadContentCover: true }
+  );
+
+  const schema: CollectionPropertySchemaMap =
+    // @ts-expect-error: Somethings wrong here
+    databaseMap.recordMap.collection[databaseId].value.schema;
+
+  if (!databaseMap) {
+    redirect("/500");
+  }
+
+  const postIds: string[] =
+    // @ts-expect-error: Somethings wrong here
+    databaseMap.result.reducerResults.collection_group_results.blockIds;
+
+  const postDataPromise = await Promise.allSettled(
+    postIds.map(async (id) => ({ id, data: await notion.getPage(id) }))
+  );
+  const postDataFiltered = postDataPromise.filter(
+    (p) => p.status !== "rejected"
+  ) as PromiseFulfilledResult<PageData>[];
+  const postData = postDataFiltered.map(
+    (p: PromiseFulfilledResult<PageData>) => p.value
+  );
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <div className="container mx-auto mt-24">
+      <Image
+        width="128"
+        height="128"
+        className="rounded-full mx-auto"
+        src={profileImage}
+        alt="Profile Image of Sangwan Jeon"
+      />
+      <h1 className="mt-6 text-2xl font-bold text-center">{metadata.title}</h1>
+      <p className="mt-3 w-full mx-auto px-6 whitespace-normal text-center box-border break-keep">
+        {metadata.description}
+      </p>
+      <div className="my-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mx-auto justify-items-center gap-y-6">
+        {postData.map((data) => (
+          <Article key={data.id} pageData={data.data} schema={schema} />
+        ))}
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    </div>
+  );
 }
