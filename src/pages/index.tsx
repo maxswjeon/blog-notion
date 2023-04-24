@@ -9,12 +9,7 @@ import {
   ImageBlock,
 } from "notion-types";
 import { parsePageId } from "notion-utils";
-import { getDirectChild, getGrayMatter } from "utils/notion";
-
-type PageData = {
-  id: string;
-  data: ExtendedRecordMap;
-};
+import { PageData, getDirectChild, getGrayMatter } from "utils/notion";
 
 type Props = {
   metadata: {

@@ -8,6 +8,11 @@ import {
 } from "notion-types";
 import { getPageContentBlockIds, getTextContent } from "notion-utils";
 
+export type PageData = {
+  id: string;
+  data: ExtendedRecordMap;
+};
+
 export function getGrayMatter(recordMap: ExtendedRecordMap) {
   const contentIds = getPageContentBlockIds(recordMap);
 

@@ -1,9 +1,9 @@
 import { GetStaticPaths, GetStaticProps } from "next";
 import { NotionAPI } from "notion-client";
-import { CollectionViewBlock } from "notion-types";
+import { CollectionPropertySchemaMap, CollectionViewBlock } from "notion-types";
 import { getTextContent, parsePageId } from "notion-utils";
 import { NotionRenderer } from "react-notion-x";
-import { getDirectChild } from "utils/notion";
+import { PageData, getDirectChild, getMainPage } from "utils/notion";
 
 type Props = {
   contentJson: string;
@@ -88,13 +88,45 @@ export const getStaticPaths: GetStaticPaths = async () => {
     // @ts-expect-error: Something's wrong here
     databaseMap.result.reducerResults.collection_group_results.blockIds;
 
-  const paths = postIds.map((id) => ({
-    params: {
-      slug: `${encodeURIComponent(
-        getTextContent(databaseMap.recordMap.block[id].value.properties.title)
-      )}-${id.replaceAll("-", "")}`,
-    },
-  }));
+  const schema: CollectionPropertySchemaMap =
+    // @ts-expect-error: Something's wrong here
+    databaseMap.recordMap.collection[databaseId].value.schema;
+
+  const pathColumnId = Object.keys(schema).find(
+    (key) => schema[key].name === "Path"
+  );
+
+  const postDataPromise = await Promise.allSettled(
+    postIds.map(async (id) => ({ id, data: await notion.getPage(id) }))
+  );
+  const postDataFiltered = postDataPromise.filter(
+    (p) => p.status !== "rejected"
+  ) as PromiseFulfilledResult<PageData>[];
+  const postData = postDataFiltered.map(
+    (p: PromiseFulfilledResult<PageData>) => p.value
+  );
+
+  const paths = postData
+    .map((data) => {
+      const mainPage = getMainPage(data.data);
+      if (!mainPage || !mainPage.properties) {
+        return null;
+      }
+
+      if (!pathColumnId || !(pathColumnId in mainPage.properties)) {
+        return null;
+      }
+
+      const pageId = mainPage.id.replaceAll("-", "");
+      //@ts-expect-error: PageBlock.properties is not well typed
+      const slug = getTextContent(mainPage.properties[pathColumnId]);
+      return {
+        params: {
+          slug: `${slug}-${pageId}`,
+        },
+      };
+    })
+    .filter(Boolean) as { params: { slug: string } }[];
 
   return {
     paths,

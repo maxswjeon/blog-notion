@@ -1,4 +1,3 @@
-import { useRouter } from "next/router";
 import {
   CollectionPropertySchemaMap,
   ExtendedRecordMap,
@@ -37,20 +36,32 @@ function getPageCover(
 }
 
 export function Article({ pageData, schema }: Props) {
-  const router = useRouter();
-
   const pageBlock = getMainPage(pageData);
-  if (!pageBlock) {
-    return <></>;
+  if (!pageBlock || !pageBlock.properties) {
+    return null;
   }
 
   const tagsColumnId = Object.keys(schema).find(
     (key) => schema[key].name === "Tags"
   );
 
-  const title = getTextContent(pageBlock.properties?.title);
+  const pathColumnId = Object.keys(schema).find(
+    (key) => schema[key].name === "Path"
+  );
+
+  if (
+    !tagsColumnId ||
+    !pathColumnId ||
+    !(pathColumnId in pageBlock.properties)
+  ) {
+    return null;
+  }
+
+  const title = getTextContent(pageBlock.properties.title);
   const pageId = pageBlock.id.replaceAll("-", "");
-  const path = `/${title}-${pageId}`;
+  //@ts-expect-error: PageBlock.properties is not well typed
+  const slug = getTextContent(pageBlock.properties[pathColumnId]);
+  const path = `/${slug}-${pageId}`;
 
   return (
     <a
