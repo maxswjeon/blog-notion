@@ -90,7 +90,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   const paths = postIds.map((id) => ({
     params: {
-      slug: id.replaceAll("-", ""),
+      slug: `${getTextContent(
+        databaseMap.recordMap.block[id].value.properties.title
+      )}-${id.replaceAll("-", "")}`,
     },
   }));
 
