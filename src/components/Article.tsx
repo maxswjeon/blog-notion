@@ -50,17 +50,17 @@ export function Article({ pageData, schema }: Props) {
 
   const title = getTextContent(pageBlock.properties?.title);
   const pageId = pageBlock.id.replaceAll("-", "");
+  const path = `/${encodeURIComponent(`${title}-${pageId}`)}`;
 
   return (
-    <div
-      className="w-[240px] rounded-lg shadow-lg cursor-pointer"
-      onClick={() => router.push(`/${pageId}`)}
-      onKeyDown={() => router.push(`/${pageId}`)}
+    <a
+      href={path}
+      className="block w-[240px] rounded-lg shadow-lg cursor-pointer"
     >
       <CoverImage coverUrl={getPageCover(pageData, pageBlock)} />
       <div className="p-6">
         <p className="w-full font-bold whitespace-normal">{title}</p>
       </div>
-    </div>
+    </a>
   );
 }

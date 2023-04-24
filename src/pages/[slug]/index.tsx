@@ -1,7 +1,7 @@
 import { GetStaticPaths, GetStaticProps } from "next";
 import { NotionAPI } from "notion-client";
 import { CollectionViewBlock } from "notion-types";
-import { parsePageId } from "notion-utils";
+import { getTextContent, parsePageId } from "notion-utils";
 import { NotionRenderer } from "react-notion-x";
 import { getDirectChild } from "utils/notion";
 
@@ -42,7 +42,8 @@ export const getStaticProps: GetStaticProps<Props, Params> = async ({
     };
   }
 
-  const content = await notion.getPage(slug);
+  const id = slug.split("-").slice(-1)[0];
+  const content = await notion.getPage(id);
 
   return {
     props: { slug, contentJson: JSON.stringify(content) },
@@ -89,7 +90,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   const paths = postIds.map((id) => ({
     params: {
-      slug: `${id.replaceAll("-", "")}`,
+      slug: `${getTextContent(
+        databaseMap.recordMap.block[id].value.properties.title
+      )}-${id.replaceAll("-", "")}`,
     },
   }));
 
