@@ -54,8 +54,8 @@ export function Article({ pageData, schema }: Props) {
   return (
     <div
       className="w-[240px] rounded-lg shadow-lg cursor-pointer"
-      onClick={() => router.push(`/${title}-${pageId}`)}
-      onKeyDown={() => router.push(`/${title}-${pageId}`)}
+      onClick={() => router.push(`/${pageId}`)}
+      onKeyDown={() => router.push(`/${pageId}`)}
     >
       <CoverImage coverUrl={getPageCover(pageData, pageBlock)} />
       <div className="p-6">
