@@ -1,7 +1,7 @@
 import { GetStaticPaths, GetStaticProps } from "next";
 import { NotionAPI } from "notion-client";
 import { CollectionViewBlock } from "notion-types";
-import { parsePageId } from "notion-utils";
+import { getTextContent, parsePageId } from "notion-utils";
 import { NotionRenderer } from "react-notion-x";
 import { getDirectChild } from "utils/notion";
 
@@ -90,8 +90,8 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   const paths = postIds.map((id) => ({
     params: {
-      slug: `${getTextContent(
-        databaseMap.recordMap.block[id].value.properties.title
+      slug: `${encodeURIComponent(
+        getTextContent(databaseMap.recordMap.block[id].value.properties.title)
       )}-${id.replaceAll("-", "")}`,
     },
   }));
