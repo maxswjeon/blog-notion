@@ -50,7 +50,7 @@ export function Article({ pageData, schema }: Props) {
 
   const title = getTextContent(pageBlock.properties?.title);
   const pageId = pageBlock.id.replaceAll("-", "");
-  const path = `/${pageId}`;
+  const path = `/${title}-${pageId}`;
 
   return (
     <a
