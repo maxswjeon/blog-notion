@@ -1,7 +1,10 @@
 import matter from "gray-matter";
+import { NotionAPI } from "notion-client";
 import {
   Block,
   BlockType,
+  CollectionInstance,
+  CollectionPropertySchemaMap,
   ExtendedRecordMap,
   ImageBlock,
   PageBlock,
@@ -133,25 +136,53 @@ export function getDirectChild(
     .filter(Boolean) as Block[];
 }
 
-export function getImageDownloadURL(block: ImageBlock, width?: number) {
-  const source = block.format?.display_source || block.properties.source[0][0];
-
-  if (!block.space_id || !process.env.NOTION_ACTIVE_USER) {
-    return source;
-  }
-
-  const url = new URL("https://www.notion.so/image");
-  url.pathname = "/image/" + encodeURIComponent(source);
-  url.searchParams.set("id", block.id);
-  url.searchParams.set("table", "block");
-  url.searchParams.set("spaceId", block.space_id);
-  url.searchParams.set("width", (width || 1200).toString());
-  url.searchParams.set("userId", process.env.NOTION_ACTIVE_USER);
-  url.searchParams.set("cache", "v2");
-
-  return url.toString();
+export function getCoverImage(pageData: ExtendedRecordMap) {
+  const imageList = getDirectChild(pageData, "image") as ImageBlock[];
+  return imageList.length !== 0
+    ? pageData.signed_urls[imageList[0].id]
+    : "/profile.jpg";
 }
 
-export function getCookieString() {
-  return `notion_user_id=${process.env.NOTION_ACTIVE_USER};token_v2=${process.env.NOTION_AUTH_TOKEN}`;
+export async function getPostData(
+  client: NotionAPI,
+  databaseMap: CollectionInstance
+) {
+  const postIds: string[] =
+    // @ts-expect-error: Something's wrong here
+    databaseMap.result.reducerResults.collection_group_results.blockIds;
+
+  const postDataPromise = await Promise.allSettled(
+    postIds.map(async (id) => ({ id, data: await client.getPage(id) }))
+  );
+  const postDataFiltered = postDataPromise.filter(
+    (p) => p.status !== "rejected"
+  ) as PromiseFulfilledResult<PageData>[];
+
+  return postDataFiltered.map((p: PromiseFulfilledResult<PageData>) => p.value);
+}
+
+export function getSchema(databaseMap: CollectionInstance, databaseId: string) {
+  // @ts-expect-error: Something's wrong here
+  return databaseMap.recordMap.collection[databaseId].value.schema;
+}
+
+export function getColumnData(
+  pageBlock: PageBlock,
+  schema: CollectionPropertySchemaMap,
+  columnName: string
+) {
+  const columnId = Object.keys(schema).find(
+    (key) => schema[key].name === columnName
+  );
+
+  if (
+    !columnId ||
+    !pageBlock.properties ||
+    !(columnId in pageBlock.properties)
+  ) {
+    return null;
+  }
+
+  //@ts-expect-error: PageBlock.properties is not well typed
+  return pageBlock.properties[columnId];
 }

@@ -5,7 +5,7 @@ import {
   PageBlock,
 } from "notion-types";
 import { getTextContent } from "notion-utils";
-import { getDirectChild, getMainPage } from "utils/notion";
+import { getColumnData, getDirectChild, getMainPage } from "utils/notion";
 import { CoverImage } from "./CoverImage";
 
 type Props = {
@@ -41,27 +41,16 @@ export function Article({ pageData, schema }: Props) {
     return null;
   }
 
-  const tagsColumnId = Object.keys(schema).find(
-    (key) => schema[key].name === "Tags"
-  );
+  const tags = getColumnData(pageBlock, schema, "Tags");
+  const published = getColumnData(pageBlock, schema, "Published");
 
-  const pathColumnId = Object.keys(schema).find(
-    (key) => schema[key].name === "Path"
-  );
-
-  if (
-    !tagsColumnId ||
-    !pathColumnId ||
-    !(pathColumnId in pageBlock.properties)
-  ) {
+  if (!published) {
     return null;
   }
 
   const title = getTextContent(pageBlock.properties.title);
   const pageId = pageBlock.id.replaceAll("-", "");
-  //@ts-expect-error: PageBlock.properties is not well typed
-  const slug = getTextContent(pageBlock.properties[pathColumnId]);
-  const path = `/${slug}-${pageId}`;
+  const path = `/${pageId}`;
 
   return (
     <a

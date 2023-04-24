@@ -2,14 +2,16 @@ import { Article } from "components/Article";
 import { GetStaticProps } from "next";
 import Image from "next/image";
 import { NotionAPI } from "notion-client";
-import {
-  CollectionPropertySchemaMap,
-  CollectionViewBlock,
-  ExtendedRecordMap,
-  ImageBlock,
-} from "notion-types";
+import { CollectionPropertySchemaMap, CollectionViewBlock } from "notion-types";
 import { parsePageId } from "notion-utils";
-import { PageData, getDirectChild, getGrayMatter } from "utils/notion";
+import {
+  PageData,
+  getCoverImage,
+  getDirectChild,
+  getGrayMatter,
+  getPostData,
+  getSchema,
+} from "utils/notion";
 
 type Props = {
   metadata: {
@@ -63,17 +65,13 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
     authToken: process.env.NOTION_AUTH_TOKEN,
   });
 
-  const recordMap = await notion.getPage(pageId);
-  const metadata = { ...defaultMetadata, ...getGrayMatter(recordMap) };
+  const pageData = await notion.getPage(pageId);
+  const metadata = { ...defaultMetadata, ...getGrayMatter(pageData) };
 
-  const imageList = getDirectChild(recordMap, "image") as ImageBlock[];
-  const profileImage: string =
-    imageList.length !== 0
-      ? recordMap.signed_urls[imageList[0].id]
-      : "/profile.jpg";
+  const profileImage = getCoverImage(pageData);
 
   const databaseView = getDirectChild(
-    recordMap,
+    pageData,
     "collection_view"
   ) as CollectionViewBlock[];
 
@@ -91,6 +89,7 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
       redirect: "/error",
     };
   }
+
   const databaseId = databaseView[0].collection_id;
   const databaseMap = await notion.getCollectionData(
     databaseId,
@@ -99,23 +98,8 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
     { loadContentCover: true }
   );
 
-  const schema: CollectionPropertySchemaMap =
-    // @ts-expect-error: Something's wrong here
-    databaseMap.recordMap.collection[databaseId].value.schema;
-
-  const postIds: string[] =
-    // @ts-expect-error: Something's wrong here
-    databaseMap.result.reducerResults.collection_group_results.blockIds;
-
-  const postDataPromise = await Promise.allSettled(
-    postIds.map(async (id) => ({ id, data: await notion.getPage(id) }))
-  );
-  const postDataFiltered = postDataPromise.filter(
-    (p) => p.status !== "rejected"
-  ) as PromiseFulfilledResult<PageData>[];
-  const postData = postDataFiltered.map(
-    (p: PromiseFulfilledResult<PageData>) => p.value
-  );
+  const postData = await getPostData(notion, databaseMap);
+  const schema = getSchema(databaseMap, databaseId);
 
   return {
     props: {
