@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import {
   CollectionPropertySchemaMap,
   ExtendedRecordMap,
@@ -36,6 +37,8 @@ function getPageCover(
 }
 
 export function Article({ pageData, schema }: Props) {
+  const router = useRouter();
+
   const pageBlock = getMainPage(pageData);
   if (!pageBlock) {
     return <></>;
@@ -45,13 +48,18 @@ export function Article({ pageData, schema }: Props) {
     (key) => schema[key].name === "Tags"
   );
 
+  const title = getTextContent(pageBlock.properties?.title);
+  const pageId = pageBlock.id.replaceAll("-", "");
+
   return (
-    <div className="w-[240px] rounded-lg shadow-lg cursor-pointer">
+    <div
+      className="w-[240px] rounded-lg shadow-lg cursor-pointer"
+      onClick={() => router.push(`/${title}-${pageId}`)}
+      onKeyDown={() => router.push(`/${title}-${pageId}`)}
+    >
       <CoverImage coverUrl={getPageCover(pageData, pageBlock)} />
       <div className="p-6">
-        <p className="w-full font-bold whitespace-normal">
-          {getTextContent(pageBlock.properties?.title)}
-        </p>
+        <p className="w-full font-bold whitespace-normal">{title}</p>
       </div>
     </div>
   );

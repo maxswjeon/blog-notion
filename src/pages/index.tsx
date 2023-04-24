@@ -1,4 +1,4 @@
-import { Article } from "components/Articles";
+import { Article } from "components/Article";
 import { GetStaticProps } from "next";
 import Image from "next/image";
 import { NotionAPI } from "notion-client";
@@ -10,6 +10,7 @@ import {
 } from "notion-types";
 import { parsePageId } from "notion-utils";
 import { getDirectChild, getGrayMatter } from "utils/notion";
+
 type PageData = {
   id: string;
   data: ExtendedRecordMap;
