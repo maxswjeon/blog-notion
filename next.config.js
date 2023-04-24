@@ -11,10 +11,11 @@ const nextConfig = {
         protocol: "https",
         hostname: "www.notion.so",
       },
+      {
+        protocol: "https",
+        hostname: "file.notion.so",
+      },
     ],
-  },
-  experimental: {
-    appDir: true,
   },
   webpack(config) {
     const fileLoaderRule = config.module.rules.find((rule) =>

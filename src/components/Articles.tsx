@@ -1,16 +1,39 @@
-import { CollectionPropertySchemaMap, ExtendedRecordMap } from "notion-types";
+import {
+  CollectionPropertySchemaMap,
+  ExtendedRecordMap,
+  ImageBlock,
+  PageBlock,
+} from "notion-types";
 import { getTextContent } from "notion-utils";
-import { Suspense } from "react";
-import { getMainPage } from "utils/notion";
-import { CoverImage, fetchImage, getPageCover } from "./CoverImage";
-import { DummyCoverImage } from "./DummyCoverImage";
+import { getDirectChild, getMainPage } from "utils/notion";
+import { CoverImage } from "./CoverImage";
 
 type Props = {
   pageData: ExtendedRecordMap;
   schema: CollectionPropertySchemaMap;
 };
 
-const imageResourceCache = new Map<string, ReturnType<typeof fetchImage>>();
+function getPageCover(
+  pageData: ExtendedRecordMap,
+  pageBlock: PageBlock
+): string | null {
+  const cover = pageBlock.format?.page_cover;
+  if (cover) {
+    if (!cover.startsWith("http")) {
+      return `https://www.notion.so${cover}`;
+    }
+
+    return cover;
+  }
+
+  const images = getDirectChild(pageData, "image") as ImageBlock[];
+  if (images.length === 0) {
+    return null;
+  }
+  const image = images[0];
+
+  return pageData.signed_urls[image.id];
+}
 
 export function Article({ pageData, schema }: Props) {
   const pageBlock = getMainPage(pageData);
@@ -22,20 +45,9 @@ export function Article({ pageData, schema }: Props) {
     (key) => schema[key].name === "Tags"
   );
 
-  const coverData = getPageCover(pageData, pageBlock);
-
-  if (coverData.url && !imageResourceCache.has(coverData.url)) {
-    imageResourceCache.set(coverData.url, fetchImage(coverData));
-  }
-  const resource = coverData.url
-    ? imageResourceCache.get(coverData.url)?.read() || null
-    : null;
-
   return (
     <div className="w-[240px] rounded-lg shadow-lg cursor-pointer">
-      <Suspense fallback={<DummyCoverImage />}>
-        <CoverImage coverUrl={resource} />
-      </Suspense>
+      <CoverImage coverUrl={getPageCover(pageData, pageBlock)} />
       <div className="p-6">
         <p className="w-full font-bold whitespace-normal">
           {getTextContent(pageBlock.properties?.title)}
