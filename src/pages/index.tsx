@@ -1,5 +1,6 @@
 import { Article } from "components/Article";
 import { GetStaticProps } from "next";
+import Head from "next/head";
 import Image from "next/image";
 import { NotionAPI } from "notion-client";
 import { CollectionPropertySchemaMap, CollectionViewBlock } from "notion-types";
@@ -36,24 +37,34 @@ export default function MainPage({
   schema,
 }: Props) {
   return (
-    <div className="container mx-auto mt-24">
-      <Image
-        width="128"
-        height="128"
-        className="rounded-full mx-auto"
-        src={profileImage}
-        alt="Profile Image of Sangwan Jeon"
-      />
-      <h1 className="mt-6 text-2xl font-bold text-center">{metadata.title}</h1>
-      <p className="mt-3 w-full mx-auto px-6 whitespace-normal text-center box-border break-keep">
-        {metadata.description}
-      </p>
-      <div className="my-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mx-auto justify-items-center gap-y-6">
-        {postData.map((data) => (
-          <Article key={data.id} pageData={data.data} schema={schema} />
-        ))}
+    <>
+      <Head>
+        <title>{metadata.title}</title>
+        <meta name="title" content={metadata.title} />
+        <meta name="description" content={metadata.description} />
+        <link rel="icon" href={profileImage} />
+      </Head>
+      <div className="container mx-auto mt-24">
+        <Image
+          width="128"
+          height="128"
+          className="rounded-full mx-auto"
+          src={profileImage}
+          alt="Profile Image of Sangwan Jeon"
+        />
+        <h1 className="mt-6 text-2xl font-bold text-center">
+          {metadata.title}
+        </h1>
+        <p className="mt-3 w-full mx-auto px-6 whitespace-normal text-center box-border break-keep">
+          {metadata.description}
+        </p>
+        <div className="my-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mx-auto justify-items-center gap-y-6">
+          {postData.map((data) => (
+            <Article key={data.id} pageData={data.data} schema={schema} />
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

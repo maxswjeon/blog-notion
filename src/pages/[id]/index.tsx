@@ -3,7 +3,13 @@ import { NotionAPI } from "notion-client";
 import { CollectionViewBlock } from "notion-types";
 import { parsePageId } from "notion-utils";
 import { NotionRenderer } from "react-notion-x";
-import { getDirectChild, getMainPage, getPostData } from "utils/notion";
+import {
+  getColumnData,
+  getDirectChild,
+  getMainPage,
+  getPostData,
+  getSchema,
+} from "utils/notion";
 
 type Props = {
   contentJson: string;
@@ -84,6 +90,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   );
 
   const postData = await getPostData(notion, databaseMap);
+  const schema = getSchema(databaseMap, databaseId);
 
   const paths = postData
     .map((data) => {
@@ -94,10 +101,18 @@ export const getStaticPaths: GetStaticPaths = async () => {
       }
 
       const pageId = mainPage.id.replaceAll("-", "");
+
+      const published = getColumnData(mainPage, schema, "Published");
+
+      if (!published) {
+        return null;
+      }
+
       return {
         params: {
           id: pageId,
         },
+        fallback: false,
       };
     })
     .filter(Boolean) as { params: { id: string } }[];
