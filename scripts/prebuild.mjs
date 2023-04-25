@@ -99,6 +99,12 @@ async function getCoverImage(pageData) {
   const imagePath = path.join(process.cwd(), "public", "profile.jpg");
 
   try {
+    const publicStat = await fs.stat(path.join(process.cwd(), "public"));
+  } catch {
+    await fs.mkdir(path.join(process.cwd(), "public"));
+  }
+
+  try {
     const imageStat = await fs.stat(imagePath);
     if (imageStat.isFile()) {
       await fs.unlink(imagePath);
