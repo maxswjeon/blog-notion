@@ -18,12 +18,13 @@ function getPageCover(
   pageBlock: PageBlock
 ): string | null {
   const cover = pageBlock.format?.page_cover;
+
   if (cover) {
     if (!cover.startsWith("http")) {
       return `https://www.notion.so${cover}`;
     }
 
-    return cover;
+    return pageData.signed_urls[pageBlock.id];
   }
 
   const images = getDirectChild(pageData, "image") as ImageBlock[];
