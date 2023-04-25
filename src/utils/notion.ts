@@ -6,13 +6,9 @@ import {
   CollectionInstance,
   CollectionPropertySchemaMap,
   ExtendedRecordMap,
-  ImageBlock,
   PageBlock,
 } from "notion-types";
 import { getPageContentBlockIds, getTextContent } from "notion-utils";
-import * as fs from "fs/promises";
-import path from "path";
-import axios from "axios";
 
 export type PageData = {
   id: string;
