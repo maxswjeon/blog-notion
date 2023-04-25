@@ -1,25 +1,41 @@
 import { GetStaticPaths, GetStaticProps } from "next";
+import Head from "next/head";
 import { NotionAPI } from "notion-client";
 import { CollectionViewBlock } from "notion-types";
-import { parsePageId } from "notion-utils";
+import { getTextContent, parsePageId } from "notion-utils";
 import { NotionRenderer } from "react-notion-x";
-import { getDirectChild, getMainPage, getPostData } from "utils/notion";
+import {
+  getColumnData,
+  getDirectChild,
+  getMainPage,
+  getPostData,
+  getSchema,
+} from "utils/notion";
 
 type Props = {
   contentJson: string;
+  title?: string;
+  mainTitle?: string;
 };
 
 type Params = {
   id: string;
 };
 
-export default function BlogPage({ contentJson }: Props) {
+export default function BlogPage({ contentJson, title, mainTitle }: Props) {
   const content = JSON.parse(contentJson);
 
   return (
-    <div className="mt-16">
-      <NotionRenderer recordMap={content} fullPage disableHeader />
-    </div>
+    <>
+      <Head>
+        <title>{title || mainTitle || "My Notion Blog"}</title>
+        <meta name="title" content={title || mainTitle || "My Notion Blog"} />
+        <link rel="icon" href="/profile.jpg" />
+      </Head>
+      <div className="mt-16">
+        <NotionRenderer recordMap={content} fullPage disableHeader />
+      </div>
+    </>
   );
 }
 
@@ -44,8 +60,11 @@ export const getStaticProps: GetStaticProps<Props, Params> = async ({
 
   const content = await notion.getPage(id);
 
+  const pageData = getMainPage(content);
+  const title = getTextContent(pageData?.properties?.title);
+
   return {
-    props: { id, contentJson: JSON.stringify(content) },
+    props: { id, contentJson: JSON.stringify(content), title },
     revalidate: 10 * 60, // 10 minutes
   };
 };
@@ -84,6 +103,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   );
 
   const postData = await getPostData(notion, databaseMap);
+  const schema = getSchema(databaseMap, databaseId);
 
   const paths = postData
     .map((data) => {
@@ -94,9 +114,19 @@ export const getStaticPaths: GetStaticPaths = async () => {
       }
 
       const pageId = mainPage.id.replaceAll("-", "");
+      const title = getTextContent(mainPage.properties?.title);
+
+      const published = getColumnData(mainPage, schema, "Published");
+
+      if (!published) {
+        return null;
+      }
+
       return {
         params: {
           id: pageId,
+          title,
+          mainTitle: getTextContent(mainPage.properties?.title),
         },
       };
     })
