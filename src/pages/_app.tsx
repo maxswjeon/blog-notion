@@ -1,16 +1,15 @@
-import { DefaultLayout } from "layouts/DefaultLayout";
+import { Analytics } from "@vercel/analytics/react";
 import type { AppProps } from "next/app";
-import "styles/globals.css";
+
+import { DefaultLayout } from "layouts/DefaultLayout";
 import { LayoutComponent } from "types/layout";
 
-// core styles shared by all of react-notion-x (required)
+import "styles/globals.css";
+
 import "react-notion-x/src/styles.css";
 
-// used for code syntax highlighting (optional)
-import "prismjs/themes/prism-tomorrow.css";
-
-// used for rendering equations (optional)
 import "katex/dist/katex.min.css";
+import "prismjs/themes/prism-tomorrow.css";
 
 type LayoutAppProps = {
   Component: {
@@ -24,6 +23,7 @@ export default function App({ Component, pageProps }: LayoutAppProps) {
   return (
     <Layout>
       <Component {...pageProps} />
+      <Analytics />
     </Layout>
   );
 }
