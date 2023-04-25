@@ -33,7 +33,12 @@ export default function BlogPage({ contentJson, title, mainTitle }: Props) {
         <link rel="icon" href="/profile.jpg" />
       </Head>
       <div className="mt-16">
-        <NotionRenderer recordMap={content} fullPage disableHeader />
+        <NotionRenderer
+          recordMap={content}
+          fullPage
+          disableHeader
+          pageCover={null}
+        />
       </div>
     </>
   );

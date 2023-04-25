@@ -5,12 +5,13 @@ import { GetStaticProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
 
+import axios from "axios";
+
 import { NotionAPI } from "notion-client";
 import {
   CollectionPropertySchemaMap,
   CollectionViewBlock,
   ExtendedRecordMap,
-  ImageBlock,
 } from "notion-types";
 import { parsePageId } from "notion-utils";
 import {
@@ -21,15 +22,16 @@ import {
   getSchema,
 } from "utils/notion";
 
-import axios from "axios";
 import { Article } from "components/Article";
 
+type Metadata = {
+  title: string;
+  description: string;
+  [key: string]: unknown;
+};
+
 type Props = {
-  metadata: {
-    title: string;
-    description: string;
-    [key: string]: unknown;
-  };
+  metadata: Metadata;
   postData: PageData[];
   schema: CollectionPropertySchemaMap;
 };
@@ -37,18 +39,21 @@ type Props = {
 const defaultMetadata = {
   title: "Blog",
   description: "My Blog, powered by Notion",
-} satisfies Props["metadata"];
+} satisfies Metadata;
 
 async function getCoverImage(pageData: ExtendedRecordMap) {
-  const imageList = getDirectChild(pageData, "image") as ImageBlock[];
-  if (imageList.length === 0) {
-    return;
-  }
-
+  const templatePath = path.join(process.cwd(), "templates", "profile.jpg");
   const imagePath = path.join(process.cwd(), "public", "profile.jpg");
+
   const imageStat = await fs.stat(imagePath);
   if (imageStat.isFile()) {
     await fs.unlink(imagePath);
+  }
+
+  const imageList = getDirectChild(pageData, "image");
+  if (imageList.length === 0) {
+    await fs.copyFile(templatePath, imagePath);
+    return;
   }
 
   const { data: imageData } = await axios.get(
@@ -59,6 +64,12 @@ async function getCoverImage(pageData: ExtendedRecordMap) {
   );
 
   await fs.writeFile(imagePath, Buffer.from(imageData));
+}
+
+async function writeMetadata(metadata: Metadata) {
+  const metadataPath = path.join(process.cwd(), "metadata.json");
+
+  await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 }
 
 export default function MainPage({ metadata, postData, schema }: Props) {
@@ -76,7 +87,7 @@ export default function MainPage({ metadata, postData, schema }: Props) {
           height="128"
           className="rounded-full mx-auto"
           src="/profile.jpg"
-          alt="Profile Image of Sangwan Jeon"
+          alt="Profile Image"
         />
         <h1 className="mt-6 text-2xl font-bold text-center">
           {metadata.title}
@@ -105,7 +116,8 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
   const pageData = await notion.getPage(pageId);
   const metadata = { ...defaultMetadata, ...getGrayMatter(pageData) };
 
-  getCoverImage(pageData);
+  await getCoverImage(pageData);
+  await writeMetadata(metadata);
 
   const databaseView = getDirectChild(
     pageData,

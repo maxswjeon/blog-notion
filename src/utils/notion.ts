@@ -158,14 +158,19 @@ export function getSchema(databaseMap: CollectionInstance, databaseId: string) {
   return databaseMap.recordMap.collection[databaseId].value.schema;
 }
 
+export function getColumnId(
+  schema: CollectionPropertySchemaMap,
+  columnName: string
+) {
+  return Object.keys(schema).find((key) => schema[key].name === columnName);
+}
+
 export function getColumnData(
   pageBlock: PageBlock,
   schema: CollectionPropertySchemaMap,
   columnName: string
 ) {
-  const columnId = Object.keys(schema).find(
-    (key) => schema[key].name === columnName
-  );
+  const columnId = getColumnId(schema, columnName);
 
   if (
     !columnId ||
@@ -176,5 +181,18 @@ export function getColumnData(
   }
 
   //@ts-expect-error: PageBlock.properties is not well typed
-  return pageBlock.properties[columnId];
+  return pageBlock.properties[columnId] as string[][];
+}
+
+export function getSelectColors(
+  schema: CollectionPropertySchemaMap,
+  columnName: string
+) {
+  const columnId = getColumnId(schema, columnName);
+
+  if (!columnId || !schema[columnId].options) {
+    return null;
+  }
+
+  return schema[columnId].options;
 }

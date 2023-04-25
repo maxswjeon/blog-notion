@@ -5,7 +5,8 @@
   "scripts": {
     "amplify:prepare": "$PWD/amplify-environment.sh",
     "dev": "next dev",
-    "build": "next build",
+    "prebuild": "node ./scripts/prebuild.mjs",
+    "build": "pnpm prebuild && next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -31,11 +32,15 @@
     "zustand": "^4.3.7"
   },
   "devDependencies": {
+    "@next/env": "^13.3.1",
     "@svgr/webpack": "^7.0.0",
+    "@types/dotenv-flow": "^3.2.0",
     "autoprefixer": "^10.4.14",
     "cssnano": "^6.0.0",
+    "dotenv-flow": "^3.2.0",
     "postcss": "^8.4.23",
-    "tailwindcss": "^3.3.1"
+    "tailwindcss": "^3.3.1",
+    "ts-node": "^10.9.1"
   },
   "packageManager": "pnpm@8.3.1"
 }
