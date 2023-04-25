@@ -1,18 +1,28 @@
-import { Article } from "components/Article";
+import fs from "fs/promises";
+import path from "path";
+
 import { GetStaticProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
+
 import { NotionAPI } from "notion-client";
-import { CollectionPropertySchemaMap, CollectionViewBlock } from "notion-types";
+import {
+  CollectionPropertySchemaMap,
+  CollectionViewBlock,
+  ExtendedRecordMap,
+  ImageBlock,
+} from "notion-types";
 import { parsePageId } from "notion-utils";
 import {
   PageData,
-  getCoverImage,
   getDirectChild,
   getGrayMatter,
   getPostData,
   getSchema,
 } from "utils/notion";
+
+import axios from "axios";
+import { Article } from "components/Article";
 
 type Props = {
   metadata: {
@@ -21,7 +31,6 @@ type Props = {
     [key: string]: unknown;
   };
   postData: PageData[];
-  profileImage: string;
   schema: CollectionPropertySchemaMap;
 };
 
@@ -30,26 +39,43 @@ const defaultMetadata = {
   description: "My Blog, powered by Notion",
 } satisfies Props["metadata"];
 
-export default function MainPage({
-  metadata,
-  postData,
-  profileImage,
-  schema,
-}: Props) {
+async function getCoverImage(pageData: ExtendedRecordMap) {
+  const imageList = getDirectChild(pageData, "image") as ImageBlock[];
+  if (imageList.length === 0) {
+    return;
+  }
+
+  const imagePath = path.join(process.cwd(), "public", "profile.jpg");
+  const imageStat = await fs.stat(imagePath);
+  if (imageStat.isFile()) {
+    await fs.unlink(imagePath);
+  }
+
+  const { data: imageData } = await axios.get(
+    pageData.signed_urls[imageList[0].id],
+    {
+      responseType: "arraybuffer",
+    }
+  );
+
+  await fs.writeFile(imagePath, Buffer.from(imageData));
+}
+
+export default function MainPage({ metadata, postData, schema }: Props) {
   return (
     <>
       <Head>
         <title>{metadata.title}</title>
         <meta name="title" content={metadata.title} />
         <meta name="description" content={metadata.description} />
-        <link rel="icon" href={profileImage} />
+        <link rel="icon" href="/profile.jpg" />
       </Head>
       <div className="container mx-auto mt-24">
         <Image
           width="128"
           height="128"
           className="rounded-full mx-auto"
-          src={profileImage}
+          src="/profile.jpg"
           alt="Profile Image of Sangwan Jeon"
         />
         <h1 className="mt-6 text-2xl font-bold text-center">
@@ -79,7 +105,7 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
   const pageData = await notion.getPage(pageId);
   const metadata = { ...defaultMetadata, ...getGrayMatter(pageData) };
 
-  const profileImage = getCoverImage(pageData);
+  getCoverImage(pageData);
 
   const databaseView = getDirectChild(
     pageData,
@@ -94,7 +120,6 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
       props: {
         metadata,
         postData: [],
-        profileImage,
         schema: {},
       },
       redirect: "/error",
@@ -116,7 +141,6 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
     props: {
       metadata,
       postData,
-      profileImage,
       schema,
     },
     revalidate: 10 * 60, // 10 minutes

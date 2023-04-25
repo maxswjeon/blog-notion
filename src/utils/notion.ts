@@ -10,6 +10,9 @@ import {
   PageBlock,
 } from "notion-types";
 import { getPageContentBlockIds, getTextContent } from "notion-utils";
+import * as fs from "fs/promises";
+import path from "path";
+import axios from "axios";
 
 export type PageData = {
   id: string;
@@ -134,13 +137,6 @@ export function getDirectChild(
       return block;
     })
     .filter(Boolean) as Block[];
-}
-
-export function getCoverImage(pageData: ExtendedRecordMap) {
-  const imageList = getDirectChild(pageData, "image") as ImageBlock[];
-  return imageList.length !== 0
-    ? pageData.signed_urls[imageList[0].id]
-    : "/profile.jpg";
 }
 
 export async function getPostData(
