@@ -5,7 +5,12 @@ import {
   PageBlock,
 } from "notion-types";
 import { getTextContent } from "notion-utils";
-import { getColumnData, getDirectChild, getMainPage } from "utils/notion";
+import {
+  getColumnData,
+  getDirectChild,
+  getMainPage,
+  getSelectColors,
+} from "utils/notion";
 import { CoverImage } from "./CoverImage";
 
 type Props = {
@@ -42,16 +47,37 @@ export function Article({ pageData, schema }: Props) {
     return null;
   }
 
-  const tags = getColumnData(pageBlock, schema, "Tags");
+  const tags = getColumnData(pageBlock, schema, "Tags") as string[][] | null;
   const published = getColumnData(pageBlock, schema, "Published");
+  const tagColors = getSelectColors(schema, "Tags");
 
-  if (!published) {
+  if (!published || !tags || !tagColors || published[0][0] !== "Yes") {
     return null;
   }
 
   const title = getTextContent(pageBlock.properties.title);
   const pageId = pageBlock.id.replaceAll("-", "");
   const path = `/${pageId}`;
+
+  const Tags = tags[0][0]
+    .split(",")
+    .map((tag) => {
+      const color = tagColors.find((c) => c.value === tag)?.color;
+
+      if (!color) {
+        return null;
+      }
+
+      return (
+        <span
+          key={tag}
+          className={`rounded-full px-3 py-1 notion-bg-${color} text-gray-900 text-xs`}
+        >
+          {tag}
+        </span>
+      );
+    })
+    .filter(Boolean);
 
   return (
     <a
@@ -60,7 +86,8 @@ export function Article({ pageData, schema }: Props) {
     >
       <CoverImage coverUrl={getPageCover(pageData, pageBlock)} />
       <div className="p-6">
-        <p className="w-full font-bold whitespace-normal">{title}</p>
+        <div className="flex gap-2 overflow-hidden">{Tags}</div>
+        <p className="w-full mt-3 font-bold whitespace-normal">{title}</p>
       </div>
     </a>
   );

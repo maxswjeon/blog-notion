@@ -10,3 +10,70 @@
     "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 }
+
+.notion-page-cover-wrapper,
+.notion-page-cover {
+  display: none !important;
+}
+
+.notion-color-red {
+  color: #ffe2dd !important;
+}
+.notion-color-pink {
+  color: #f5e0e9 !important;
+}
+.notion-color-purple {
+  color: #e8deee !important;
+}
+.notion-color-blue {
+  color: #d3e5ef !important;
+}
+.notion-color-green {
+  color: #dbeddb !important;
+}
+.notion-color-yellow {
+  color: #fdecc8 !important;
+}
+.notion-color-orange {
+  color: #fadec9 !important;
+}
+.notion-color-brown {
+  color: #eee0da !important;
+}
+.notion-color-gray {
+  color: #e3e2e0 !important;
+}
+.notion-color-lightgray {
+  color: #f1f0ef !important;
+}
+
+.notion-bg-red {
+  background-color: #ffe2dd !important;
+}
+.notion-bg-pink {
+  background-color: #f5e0e9 !important;
+}
+.notion-bg-purple {
+  background-color: #e8deee !important;
+}
+.notion-bg-blue {
+  background-color: #d3e5ef !important;
+}
+.notion-bg-green {
+  background-color: #dbeddb !important;
+}
+.notion-bg-yellow {
+  background-color: #fdecc8 !important;
+}
+.notion-bg-orange {
+  background-color: #fadec9 !important;
+}
+.notion-bg-brown {
+  background-color: #eee0da !important;
+}
+.notion-bg-gray {
+  background-color: #e3e2e0 !important;
+}
+.notion-bg-lightgray {
+  background-color: #f1f0ef !important;
+}
