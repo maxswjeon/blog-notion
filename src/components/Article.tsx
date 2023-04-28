@@ -47,11 +47,11 @@ export function Article({ pageData, schema }: Props) {
     return null;
   }
 
-  const tags = getColumnData(pageBlock, schema, "Tags") as string[][] | null;
+  const tags = getColumnData(pageBlock, schema, "Tags") || [[""]];
   const published = getColumnData(pageBlock, schema, "Published");
   const tagColors = getSelectColors(schema, "Tags");
 
-  if (!published || !tags || !tagColors || published[0][0] !== "Yes") {
+  if (!published || !tagColors || published[0][0] !== "Yes") {
     return null;
   }
 
