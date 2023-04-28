@@ -1,5 +1,6 @@
 import { Analytics } from "@vercel/analytics/react";
 import type { AppProps } from "next/app";
+import Script from "next/script";
 
 import { DefaultLayout } from "layouts/DefaultLayout";
 import { LayoutComponent } from "types/layout";
@@ -9,7 +10,6 @@ import "styles/globals.css";
 import "react-notion-x/src/styles.css";
 
 import "katex/dist/katex.min.css";
-import Script from "next/script";
 import "prismjs/themes/prism-tomorrow.css";
 
 type LayoutAppProps = {

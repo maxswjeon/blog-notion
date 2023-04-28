@@ -1,5 +1,7 @@
 import { GetStaticPaths, GetStaticProps } from "next";
+import dynamic from "next/dynamic";
 import Head from "next/head";
+
 import { NotionAPI } from "notion-client";
 import { CollectionViewBlock } from "notion-types";
 import { getTextContent, parsePageId } from "notion-utils";
@@ -11,6 +13,30 @@ import {
   getPostData,
   getSchema,
 } from "utils/notion";
+
+const Code = dynamic(() =>
+  import("react-notion-x/build/third-party/code").then((m) => m.Code)
+);
+const Collection = dynamic(() =>
+  import("react-notion-x/build/third-party/collection").then(
+    (m) => m.Collection
+  )
+);
+const Equation = dynamic(() =>
+  import("react-notion-x/build/third-party/equation").then((m) => m.Equation)
+);
+const Pdf = dynamic(
+  () => import("react-notion-x/build/third-party/pdf").then((m) => m.Pdf),
+  {
+    ssr: false,
+  }
+);
+const Modal = dynamic(
+  () => import("react-notion-x/build/third-party/modal").then((m) => m.Modal),
+  {
+    ssr: false,
+  }
+);
 
 type Props = {
   contentJson: string;
@@ -38,6 +64,13 @@ export default function BlogPage({ contentJson, title, mainTitle }: Props) {
           fullPage
           disableHeader
           pageCover={null}
+          components={{
+            Code,
+            Collection,
+            Equation,
+            Modal,
+            Pdf,
+          }}
         />
       </div>
     </>
@@ -50,6 +83,7 @@ export const getStaticProps: GetStaticProps<Props, Params> = async ({
   const notion = new NotionAPI({
     activeUser: process.env.NOTION_ACTIVE_USER,
     authToken: process.env.NOTION_AUTH_TOKEN,
+    userTimeZone: "Asia/Seoul",
   });
 
   const id = params?.id;
@@ -123,7 +157,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
       const published = getColumnData(mainPage, schema, "Published");
 
-      if (!published) {
+      if (!published || published[0][0] !== "Yes") {
         return null;
       }
 
