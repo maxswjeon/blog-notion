@@ -51,8 +51,6 @@ export function Article({ pageData, schema }: Props) {
   const published = getColumnData(pageBlock, schema, "Published");
   const tagColors = getSelectColors(schema, "Tags");
 
-  console.log(pageBlock.id, published);
-
   if (!published || !tags || !tagColors || published[0][0] !== "Yes") {
     return null;
   }

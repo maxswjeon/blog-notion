@@ -157,7 +157,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
       const published = getColumnData(mainPage, schema, "Published");
 
-      if (!published) {
+      if (!published || published[0][0] !== "Yes") {
         return null;
       }
 
