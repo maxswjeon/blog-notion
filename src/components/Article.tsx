@@ -57,7 +57,7 @@ export function Article({ pageData, schema }: Props) {
 
   const title = getTextContent(pageBlock.properties.title);
   const pageId = pageBlock.id.replaceAll("-", "");
-  const path = `/${pageId}`;
+  const path = `/posts/${pageId}`;
 
   const Tags = tags[0][0]
     .split(",")
